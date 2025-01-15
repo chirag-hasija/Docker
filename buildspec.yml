@@ -1,0 +1,35 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing dependencies..."
+  pre_build:
+    commands:
+
+  build:
+    commands:
+      - apt-get update -y
+      - apt-get install -y docker.io
+
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 354918400011.dkr.ecr.eu-north-1.amazonaws.com
+      
+      - echo "Building the Docker image..."
+      - docker build -t first-task .
+      
+      - docker tag first-task:latest 354918400011.dkr.ecr.eu-north-1.amazonaws.com/first-task:latest
+      - echo "Pushing the Docker image to ECR..."
+      - docker push 354918400011.dkr.ecr.eu-north-1.amazonaws.com/first-task:latest
+
+      - | 
+        echo '[
+        {
+          "name": "Container_Third",
+          "imageUri": "354918400011.dkr.ecr.eu-north-1.amazonaws.com/first-task:latest"
+          }
+        ]' >imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
